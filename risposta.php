@@ -21,12 +21,16 @@
 </head>
 <body>
     <?php
+    //INIZIO ALGORITMO RICERCA
+    
+    //Prendo i parametri di ricerca
         $giorni = $_POST["giorno"];
         $ore = $_POST["ora"];
         $docenteInput = strtolower($_POST["docente"]);
         $classi = strtolower($_POST["classe"]);
         $rigaTrovata = false;
 
+    //Correggo eventuali boiate scritte dall'utente
         //STRPOS()
         foreach ($fileLetto as $riga) {
             if ((strpos($riga[0], $docenteInput) !== false)) {
@@ -48,7 +52,8 @@
                 $minimo = $lev;
             }
         }
-
+    
+        //Se l'utente ha settato un docente significa che cerca una classe
         if ($docente != "") {
             foreach ($fileLetto as $riga) {
                 if($docente == $riga[0] && $giorni == $riga[1] && $ore == $riga[2]) {
@@ -56,6 +61,7 @@
                     $rigaTrovata = true;
                 }
             }
+        //Altimenti sicuramente sta cercando un Professore
         } else {
             foreach ($fileLetto as $riga) {
                 if($classi == $riga[3] && $giorni == $riga[1] && $ore == $riga[2]) {
@@ -64,7 +70,7 @@
                 }
             }
         }
-
+        //Se non ho trovato nulla lo comunico
         if (!$rigaTrovata) {
             echo "<fieldset>non ho torvato nulla</fieldset>";
         }
