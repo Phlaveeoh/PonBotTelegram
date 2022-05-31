@@ -1,2 +1,2 @@
-{"update_id":234519743,
-"my_chat_member":{"chat":{"id":173001936,"first_name":"Phlaveeoh","username":"Phlaveeoh","type":"private"},"from":{"id":173001936,"is_bot":false,"first_name":"Phlaveeoh","username":"Phlaveeoh","language_code":"it"},"date":1653395049,"old_chat_member":{"user":{"id":5109129284,"is_bot":true,"first_name":"Er bottino","username":"ErBottinoBot"},"status":"kicked","until_date":0},"new_chat_member":{"user":{"id":5109129284,"is_bot":true,"first_name":"Er bottino","username":"ErBottinoBot"},"status":"member"}}}
+{"update_id":208963051,
+"message":{"message_id":324,"from":{"id":876670276,"is_bot":false,"first_name":"Debe","username":"Mattedebe","language_code":"it"},"chat":{"id":876670276,"first_name":"Debe","username":"Mattedebe","type":"private"},"date":1654006893,"text":"Cerca Prof"}}
