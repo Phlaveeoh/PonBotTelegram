@@ -1,7 +1,7 @@
 <?php
 //$botToken = "5109129284:AAHuJ29Co3OZT6Sm7qJWBTn-4lN7efpmJbQ";
 //https://api.telegram.org/bot5499271060:AAG_4NucqqGHkhScfczi6TpcFw7W-g0cq_Q/setwebhook?url=https://r.aspix.it/bot/e/bot.php
-$botToken="5499271060:AAG_4NucqqGHkhScfczi6TpcFw7W-g0cq_Q";
+$botToken = "5499271060:AAG_4NucqqGHkhScfczi6TpcFw7W-g0cq_Q";
 $website = "https://api.telegram.org/bot" . $botToken;
 
 $update = file_get_contents('php://input');
@@ -20,6 +20,7 @@ $tastieraTipo = '[{"text":"Cerca Prof"},{"text":"Cerca Classe"}]';
 $tastieraGiorni = '[{"text":"Lunedì"},{"text":"Martedì"}],[{"text":"Mercoledì"},{"text":"Giovedì"}],[{"text":"Venerdì"}]';
 $tastieraOreProf = '[{"text":"Prima"},{"text":"Seconda"}],[{"text":"Terza"},{"text":"Quarta"}],[{"text":"Quinta"},{"text":"Sesta"}],[{"text":"Settima"},{"text":"Ottava"}],[{"text":"Orario Completo"}]';
 $tastieraOreClasse = '[{"text":"Prima"},{"text":"Seconda"}],[{"text":"Terza"},{"text":"Quarta"}],[{"text":"Quinta"},{"text":"Sesta"}],[{"text":"Settima"},{"text":"Ottava"}]';
+
 //Connessione al DB
 $dataBase = new PDO('sqlite:sqlite.db');
 
@@ -28,15 +29,13 @@ $dataBase->query("INSERT or ignore INTO richieste(chatid) VALUES($chatId)");
 
 //Corpo del bot e gestione messaggi
 switch ($valore) {
+        //Se l'utente scrive /start:
     case ("/start"):
         $tastierino = '&reply_markup={"keyboard":[' . $tastieraTipo . '],' . '"resize_keyboard":true}';
         sendMessage($chatId, "Benvenuto, cosa vuoi cercare?", $tastierino);
         break;
-
+        //Se l'utente scrive /help:
     case ("/help"):
-    case ("help"):
-    case ("aiuto"):
-    case ("Aiuto"):
         sendMessage($chatId, "Benvenuto, sono <b>il bot proFinder sviluppato dall'indirizzo informatico dell' IISCG di Gubbio</b> ed ora ti spiegherò cosa posso fare.\n" .
             "Una volta avviato posso aiutarti a ritrovare una classe o un professore in giro per la scuola!\n" .
             "Utilizzarmi è molto semplice, basta seguire le istruzioni che ti dirò mano a mano ed ogni tuo dubbio sarà fugato in men che non si dica!\n" .
@@ -45,43 +44,50 @@ switch ($valore) {
             "<b>/help</b>: Visualizza questo messaggio.\n" .
             "<b>/delete</b>: Elimina tutti i parametri di ricerca che hai inserito.");
         break;
-
+        //Se l'utente scrive /delete:
     case ("/delete"):
+        //svuoto la riga del db che contiene il chatID dell'utente
         $dataBase->query("DELETE FROM richieste WHERE chatid=$chatId");
+        //Invio tastierino scelta funzione
         $tastierino = '&reply_markup={"keyboard":[' . $tastieraTipo . '],' . '"resize_keyboard":true}';
         sendMessage($chatId, "Eliminati tutti i parametri di ricerca precedenti \n" .
             "Cosa vuoi cercare?", $tastierino);
         break;
-
+        //Se l'utente scrive "Cerca Prof" oppure "Cerca Classe":
     case ("Cerca Prof"):
     case ("Cerca Classe"):
+        //Inserisco il messaggio sul db
         $dataBase->query("UPDATE richieste SET tipo='$valore' WHERE chatid=$chatId");
-
+        //Invio la tastiera con i giorni
         $tastierino = '&reply_markup={"keyboard":[' . $tastieraGiorni . '],' . '"resize_keyboard":true}';
         sendMessage($chatId, "Scrivi il giorno della settimana:", $tastierino);
         break;
-
+        //Se l'utente scrive un giorno della settimana:
     case ("Lunedì"):
     case ("Martedì"):
     case ("Mercoledì"):
     case ("Giovedì"):
     case ("Venerdì"):
+        //In base alla richiesta dell'utente invio una tastiera differente
         $risultato = $dataBase->query("SELECT tipo FROM richieste WHERE chatid=$chatId");
         $row = $risultato->fetch();
-        $rimuovi='&reply_markup={"remove_keyboard":true}';
+        $rimuovi = '&reply_markup={"remove_keyboard":true}';
 
         if ($row["tipo"] == "Cerca Prof") {
-           
-         $tastieraOre=$tastieraOreProf;
+            //Tastiera con opzione "Orario Completo"
+            $tastieraOre = $tastieraOreProf;
         } else {
-            $tastieraOre=$tastieraOreClasse;
+            //Tastiera senza opzione "Orario Completo"
+            $tastieraOre = $tastieraOreClasse;
         }
+        //Converto il giorno scritto in lettere in un numero
         $giorno = convertiGiorno($valore);
+        //Inserisco il valore nel db
         $dataBase->query("UPDATE richieste SET giorno=$giorno WHERE chatid=$chatId");
         $tastierino = '&reply_markup={"keyboard":[' . $tastieraOre . '],' . '"resize_keyboard":true}';
         sendMessage($chatId, "Ok ora scrivi l'ora del giorno:", $tastierino);
         break;
-
+        //Se l'utente ha scritto un'ora della giornata:
     case ("Prima"):
     case ("Seconda"):
     case ("Terza"):
@@ -91,22 +97,26 @@ switch ($valore) {
     case ("Settima"):
     case ("Ottava"):
     case ("Orario Completo");
+        //Converto l'ora scritta in lettere in un numero
         $ora = convertiOre($valore);
+        //Inserisco il valore nel db
         $dataBase->query("UPDATE richieste SET ora=$ora WHERE chatid=$chatId");
+        //In base alla richiesta invio un messaggio personalizzato
         $risultato = $dataBase->query("SELECT tipo FROM richieste WHERE chatid=$chatId");
         $row = $risultato->fetch();
-        $rimuovi='&reply_markup={"remove_keyboard":true}';
+        $rimuovi = '&reply_markup={"remove_keyboard":true}';
 
         if ($row["tipo"] == "Cerca Prof") {
-           
-            sendMessage($chatId, "Scrivi il nome del prof che vuoi cercare:",$rimuovi);
+            sendMessage($chatId, "Scrivi il nome del prof che vuoi cercare:", $rimuovi);
         } else {
-            sendMessage($chatId, "Scrivi la classe che vuoi cercare:",$rimuovi);
+            sendMessage($chatId, "Scrivi la classe che vuoi cercare:", $rimuovi);
         }
         break;
-
+        //Qualsiasi cosa l'utente scrive la considero o un professore o una classe in base alla richiesta dell'utente
     default:
+        //profClasse è la variabile in cui memorizzo il valore
         $profClasse = $valore;
+        //In base alla richiesta, salvo profClasse nella giusta colonna del db
         $risultato = $dataBase->query("SELECT tipo FROM richieste WHERE chatid=$chatId");
         $row = $risultato->fetch();
         if ($row["tipo"] == "Cerca Prof") {
@@ -114,10 +124,11 @@ switch ($valore) {
         } else {
             $dataBase->query("UPDATE richieste SET classe='$profClasse' WHERE chatid=$chatId");
         }
-
+        //Prendo tutti i parametri scritti dall'utente
         $risultato = $dataBase->query("SELECT * FROM richieste WHERE chatid=$chatId");
         $row = $risultato->fetch();
         $tastierino = '&reply_markup={"keyboard":[' . $tastieraTipo . '],' . '"resize_keyboard":true}';
+        //Invio all'utente la risposta alla richiesta ottenuta tramite la funzione di ricerca
         sendMessage($chatId, ricerca($row), $tastierino);
         break;
 }
@@ -183,7 +194,7 @@ function convertiOre($ora)
             $ora = 8;
             break;
         case ("Orario Completo"):
-            $ora=9;
+            $ora = 9;
             break;
     }
     return $ora;
@@ -192,6 +203,7 @@ function convertiOre($ora)
 //FUNZIONE DI RICERCA
 function ricerca($row)
 {
+    //Leggo il file e lo memorizzo
     if (($file = fopen("orario.csv", "r")) !== FALSE) {
         while (($data = fgetcsv($file, 1000, ";")) !== FALSE) {
             $data[0] = strtolower($data[0]);
@@ -212,9 +224,6 @@ function ricerca($row)
     $rigaTrovata = false;
 
     if (($ore == 8 || $ore == 7) && $giorni != 0) {
-        error_log("//e// errore rilevato");
-        $tastierino = '&reply_markup={"keyboard":[' . $GLOBALS['tastieraTipo'] . '],' . '"resize_keyboard":true}';
-       // sendMessage($GLOBALS['chatId'], "Il rientro c'è solo il Lunedì, rifai la richiesta", $tastierino);
         return "Il rientro c'è solo il Lunedì, rifai la richiesta";
     }
 
@@ -241,36 +250,40 @@ function ricerca($row)
         }
     }
 
+    //In base alla richiesta dell'utente ottengo un risultato
+    //L'Utente sta cercando un Professore
     if ($tipo == "Cerca Prof") {
         $risultato = "";
         foreach ($fileLetto as $riga) {
-            if ($ore==9){
-                if ($docente == $riga[0] && $giorni == $riga[1] ) {
-                    $risultato .= " Docente ". strtoUpper($docente)." ".($riga[2]+1)." ora in Classe: " . $riga[3] . " aula: " . $riga[4]."\n";
+            //Se l'utente ha richiesto l'orario completo per quel giorno lo stampo
+            if ($ore == 9) {
+                if ($docente == $riga[0] && $giorni == $riga[1]) {
+                    $risultato .= " Docente " . strtoUpper($docente) . " " . ($riga[2] + 1) . " ora in Classe: " . $riga[3] . " aula: " . $riga[4] . "\n";
                     $rigaTrovata = true;
                 }
-            }else{
-            if ($docente == $riga[0] && $giorni == $riga[1] && $ore == $riga[2]) {
-                $risultato = " Docente ". strtoUpper($docente)." in Classe: " . $riga[3] . " aula: " . $riga[4];
-                $rigaTrovata = true;
+                //Altrimenti stampo l'orario specifico
+            } else {
+                if ($docente == $riga[0] && $giorni == $riga[1] && $ore == $riga[2]) {
+                    $risultato = " Docente " . strtoUpper($docente) . " in Classe: " . $riga[3] . " aula: " . $riga[4];
+                    $rigaTrovata = true;
+                }
             }
         }
-        }
-        //Altimenti sicuramente sta cercando un Professore
+        //Altimenti sicuramente sta cercando una Classe
     } else if ($tipo == "Cerca Classe") {
         $risultato = "";
         foreach ($fileLetto as $riga) {
-           
+
             if ($classi == $riga[3] && $giorni == $riga[1] && $ore == $riga[2]) {
                 $risultato = "Prof: " . $riga[0] . " aula:" . $riga[4];
                 $rigaTrovata = true;
             }
         }
-        
     }
     //Se non ho trovato nulla lo comunico
     if (!$rigaTrovata) {
         $risultato = "non ho trovato nulla";
     }
+    //restituisco ciò che ho ottenuto dalla richiesta
     return $risultato;
 }
